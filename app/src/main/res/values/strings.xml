@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">CircularWatchFace</string>
-    <string name="analog_name">circular watch face</string>
+    <string name="app_name">CircularFilledWatchFace</string>
+    <string name="analog_name">circular filled watch face</string>
 </resources>
