@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="br.com.mobile.android.circularwatchface">
+    package="br.com.mobile.android.circularfilledwatchface">
 
     <uses-feature android:name="android.hardware.type.watch" />
 
@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
         <service
-            android:name=".CircularWatchFaceService"
+            android:name="br.com.mobile.android.circularfilledwatchface.CircularWatchFaceService"
             android:label="@string/analog_name"
             android:permission="android.permission.BIND_WALLPAPER">
             <meta-data

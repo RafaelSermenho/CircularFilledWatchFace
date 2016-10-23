@@ -1,4 +1,4 @@
-package br.com.mobile.android.circularwatchface;
+package br.com.mobile.android.circularfilledwatchface;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -32,22 +32,19 @@ public class CircularWatchFaceService extends CanvasWatchFaceService {
      * second hand.
      */
     private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
-
-    private Calendar mCalendar;
-
-    // device features
-    private boolean mLowBitAmbient;
-
     // graphic objects
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
+    private final Rect textBounds = new Rect();
+    private Calendar mCalendar;
+    // device features
+    private boolean mLowBitAmbient;
     private Paint mMinutesPaint;
     private float mCenterX;
     private float mCenterY;
     private int mChinSize;
     private Paint mTextPaint;
     private boolean mAmbient;
-    private final Rect textBounds = new Rect();
     private boolean mIsRound;
     private boolean is24hFormat;
 
@@ -59,6 +56,32 @@ public class CircularWatchFaceService extends CanvasWatchFaceService {
 
     /* implement service callback methods */
     private class Engine extends CanvasWatchFaceService.Engine {
+        // handler to update the time once a second in interactive mode
+        final Handler mUpdateTimeHandler = new Handler() {
+            @Override
+            public void handleMessage(Message message) {
+                switch (message.what) {
+                    case MSG_UPDATE_TIME:
+                        invalidate();
+                        if (shouldTimerBeRunning()) {
+                            long timeMs = System.currentTimeMillis();
+                            long delayMs = INTERACTIVE_UPDATE_RATE_MS
+                                    - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
+                            mUpdateTimeHandler
+                                    .sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
+                        }
+                        break;
+                }
+            }
+        };
+        // receiver to update the time zone
+        final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mCalendar.setTimeZone(TimeZone.getDefault());
+                invalidate();
+            }
+        };
         private boolean mRegisteredTimeZoneReceiver;
 
         @Override
@@ -69,7 +92,7 @@ public class CircularWatchFaceService extends CanvasWatchFaceService {
 
             mMinutesPaint = new Paint();
             mMinutesPaint.setAntiAlias(true);
-            mMinutesPaint.setStyle(Paint.Style.STROKE);
+            mMinutesPaint.setStyle(Paint.Style.FILL_AND_STROKE);
             mMinutesPaint.setStrokeWidth(5);
             mMinutesPaint.setColor(resources.getColor(R.color.dawn));
 
@@ -148,9 +171,9 @@ public class CircularWatchFaceService extends CanvasWatchFaceService {
 
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
             if (mIsRound) {
-                canvas.drawArc(bounds.left + mChinSize, bounds.top + mChinSize, bounds.right - mChinSize, bounds.bottom - mChinSize, -90, minRot, false, mMinutesPaint);
+                canvas.drawArc(bounds.left + mChinSize, bounds.top + mChinSize, bounds.right - mChinSize, bounds.bottom - mChinSize, -90, minRot, true, mMinutesPaint);
             } else {
-                canvas.drawArc(bounds.left + 40, bounds.top  + 40, bounds.right - 40 , bounds.bottom - 40, -90, minRot, false, mMinutesPaint);
+                canvas.drawArc(bounds.left + 40, bounds.top + 40, bounds.right - 40, bounds.bottom - 40, -90, minRot, true, mMinutesPaint);
             }
 //            if (minutes == 0) {
 //                canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -214,35 +237,6 @@ public class CircularWatchFaceService extends CanvasWatchFaceService {
         private boolean shouldTimerBeRunning() {
             return isVisible() && !isInAmbientMode();
         }
-
-        // handler to update the time once a second in interactive mode
-        final Handler mUpdateTimeHandler = new Handler() {
-            @Override
-            public void handleMessage(Message message) {
-                switch (message.what) {
-                    case MSG_UPDATE_TIME:
-                        invalidate();
-                        if (shouldTimerBeRunning()) {
-                            long timeMs = System.currentTimeMillis();
-                            long delayMs = INTERACTIVE_UPDATE_RATE_MS
-                                    - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
-                            mUpdateTimeHandler
-                                    .sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
-                        }
-                        break;
-                }
-            }
-        };
-
-
-        // receiver to update the time zone
-        final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                mCalendar.setTimeZone(TimeZone.getDefault());
-                invalidate();
-            }
-        };
 
         @Override
         public void onSurfaceChanged(
